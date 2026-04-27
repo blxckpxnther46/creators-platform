@@ -1,88 +1,104 @@
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Register = () => {
-  return (
-    <div style={containerStyle}>
-      <div style={formContainerStyle}>
-        <h1 style={titleStyle}>Create Account</h1>
-        <p style={subtitleStyle}>Join {/* Your Platform Name */} today</p>
-        
-        {/* Placeholder for registration form */}
-        <div style={placeholderStyle}>
-          <p>Registration form will be implemented in a future lesson</p>
-          <p>This will include:</p>
-          <ul style={listStyle}>
-            <li>Name input field</li>
-            <li>Email input field</li>
-            <li>Password input field</li>
-            <li>Confirm password field</li>
-            <li>Registration button</li>
-            <li>Form validation</li>
-          </ul>
-        </div>
+  const navigate = useNavigate();
 
-        <p style={linkTextStyle}>
-          Already have an account?{' '}
-          <Link to="/login" style={linkStyle}>
-            Login here
-          </Link>
-        </p>
-      </div>
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
+
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const validate = () => {
+    let err = {};
+
+    if (!formData.name.trim()) err.name = 'Name required';
+    if (!formData.email.includes('@')) err.email = 'Invalid email';
+    if (formData.password.length < 6) err.password = 'Min 6 chars';
+    if (formData.password !== formData.confirmPassword)
+      err.confirmPassword = 'Passwords must match';
+
+    setErrors(err);
+    return Object.keys(err).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setApiError('');
+    setSuccess('');
+
+    if (!validate()) return;
+
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setSuccess('Account created! Redirecting...');
+        setTimeout(() => navigate('/login'), 2000);
+      } else {
+        setApiError(data.message);
+      }
+    } catch {
+      setApiError('Server error');
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div style={container}>
+      <form onSubmit={handleSubmit} style={form}>
+        <h2>Create Account</h2>
+
+        <input name="name" placeholder="Name" onChange={handleChange} />
+        {errors.name && <p>{errors.name}</p>}
+
+        <input name="email" placeholder="Email" onChange={handleChange} />
+        {errors.email && <p>{errors.email}</p>}
+
+        <input type="password" name="password" placeholder="Password" onChange={handleChange} />
+        {errors.password && <p>{errors.password}</p>}
+
+        <input type="password" name="confirmPassword" placeholder="Confirm Password" onChange={handleChange} />
+        {errors.confirmPassword && <p>{errors.confirmPassword}</p>}
+
+        <button disabled={loading}>
+          {loading ? 'Creating...' : 'Register'}
+        </button>
+
+        {apiError && <p style={{ color: 'red' }}>{apiError}</p>}
+        {success && <p style={{ color: 'green' }}>{success}</p>}
+
+        <p>Already have an account? <Link to="/login">Login</Link></p>
+      </form>
     </div>
   );
 };
 
-// Use the same styles as Login page
-const containerStyle = {
-  minHeight: '80vh',
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  padding: '2rem',
-};
-
-const formContainerStyle = {
-  maxWidth: '400px',
-  width: '100%',
-  padding: '2rem',
-  backgroundColor: 'white',
-  borderRadius: '8px',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-};
-
-const titleStyle = {
-  textAlign: 'center',
-  marginBottom: '0.5rem',
-  color: '#333',
-};
-
-const subtitleStyle = {
-  textAlign: 'center',
-  color: '#666',
-  marginBottom: '2rem',
-};
-
-const placeholderStyle = {
-  backgroundColor: '#f8f9fa',
-  padding: '1.5rem',
-  borderRadius: '5px',
-  marginBottom: '1rem',
-};
-
-const listStyle = {
-  paddingLeft: '1.5rem',
-  marginTop: '1rem',
-};
-
-const linkTextStyle = {
-  textAlign: 'center',
-  marginTop: '1rem',
-};
-
-const linkStyle = {
-  color: '#007bff',
-  textDecoration: 'none',
-  fontWeight: 'bold',
-};
-
 export default Register;
+
+const container = { display: 'flex', justifyContent: 'center', padding: '2rem' };
+const form = { width: '300px', display: 'flex', flexDirection: 'column', gap: '10px' };
