@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom';
+import ConnectionTest from '../components/common/ConnectionTest.jsx';
+
 
 const Home = () => {
   return (
@@ -16,6 +18,11 @@ const Home = () => {
             Login
           </Link>
         </div>
+      </div>
+
+      {/* Add the connection test */}
+      <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
+        <ConnectionTest />
       </div>
 
       <div style={featuresStyle}>
