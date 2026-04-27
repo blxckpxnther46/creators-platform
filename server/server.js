@@ -1,11 +1,9 @@
 import express from 'express';
 import dotenv from 'dotenv';
+dotenv.config();
 import cors from 'cors';
 import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
-
-// Load environment variables
-dotenv.config();
 
 // Connect to database
 connectDB();
