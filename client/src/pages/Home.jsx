@@ -6,40 +6,38 @@ const Home = () => {
   return (
     <div style={containerStyle}>
       <div style={heroStyle}>
-        <h1 style={titleStyle}>{/* Platform Name/Tagline */}</h1>
+        <h1 style={titleStyle}>Creator's Platform</h1>
         <p style={subtitleStyle}>
-          {/* Brief description of what your platform does */}
+          Build, manage and grow your content like a pro.
         </p>
+
         <div style={ctaStyle}>
-          <Link to="/register" style={buttonStyle}>
-            Get Started
-          </Link>
-          <Link to="/login" style={secondaryButtonStyle}>
-            Login
-          </Link>
+          <Link to="/register" style={buttonStyle}>Get Started</Link>
+          <Link to="/login" style={secondaryButtonStyle}>Login</Link>
         </div>
       </div>
 
-      {/* Add the connection test */}
       <div style={{ maxWidth: '800px', margin: '0 auto', padding: '2rem' }}>
         <ConnectionTest />
       </div>
 
       <div style={featuresStyle}>
-        <h2>Why Choose {/* Platform Name */}?</h2>
+        <h2>Why Choose Creator's Platform?</h2>
+
         <div style={featureGridStyle}>
-          {/* Add 3 feature cards based on your theme */}
           <div style={featureCardStyle}>
-            <h3>Feature 1</h3>
-            <p>Description</p>
+            <h3>🚀 Fast Setup</h3>
+            <p>Start building instantly with our powerful tools.</p>
           </div>
+
           <div style={featureCardStyle}>
-            <h3>Feature 2</h3>
-            <p>Description</p>
+            <h3>🔐 Secure</h3>
+            <p>Your data is protected with modern security standards.</p>
           </div>
+
           <div style={featureCardStyle}>
-            <h3>Feature 3</h3>
-            <p>Description</p>
+            <h3>📊 Analytics</h3>
+            <p>Track growth and performance in real-time.</p>
           </div>
         </div>
       </div>
