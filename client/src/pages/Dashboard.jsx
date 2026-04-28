@@ -1,48 +1,28 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const [user] = useState(() => {
-    try {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
+  const { user, logout, loading } = useAuth();
 
-      if (!token || !userData) {
-        return null;
-      }
+  // ⏳ Wait until auth is checked
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '2rem' }}>
+        Loading...
+      </div>
+    );
+  }
 
-      return JSON.parse(userData);
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      return null;
-    }
-  });
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [navigate, user]);
-
-  const handleLogout = () => {
-    // Clear localStorage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    // Redirect to login
-    navigate('/login');
-  };
-
+  // 🔒 Not logged in → redirect
   if (!user) {
-    return <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>;
+    return <Navigate to="/login" />;
   }
 
   return (
     <div style={containerStyle}>
       <div style={headerStyle}>
         <h1>Welcome, {user.name}!</h1>
-        <button onClick={handleLogout} style={logoutButtonStyle}>
+        <button onClick={logout} style={logoutButtonStyle}>
           Logout
         </button>
       </div>
@@ -53,7 +33,12 @@ const Dashboard = () => {
           <div style={infoStyle}>
             <p><strong>Name:</strong> {user.name}</p>
             <p><strong>Email:</strong> {user.email}</p>
-            <p><strong>Member Since:</strong> {new Date(user.createdAt).toLocaleDateString()}</p>
+            <p>
+              <strong>Member Since:</strong>{' '}
+              {user.createdAt
+                ? new Date(user.createdAt).toLocaleDateString()
+                : 'N/A'}
+            </p>
           </div>
         </div>
 

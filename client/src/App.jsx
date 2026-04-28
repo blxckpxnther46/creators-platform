@@ -5,10 +5,12 @@ import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
 import Register from './pages/Register.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
       <div style={appStyle}>
         {/* Header appears on all pages */}
         <Header />
@@ -30,6 +32,7 @@ function App() {
         {/* Footer appears on all pages */}
         <Footer />
       </div>
+        </AuthProvider>
     </BrowserRouter>
   );
 }
