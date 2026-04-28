@@ -1,28 +1,48 @@
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/AuthContext';
 
 const Header = () => {
+  const { user, logout, isAuthenticated } = useAuth();
+
   return (
     <header style={headerStyle}>
       <div style={containerStyle}>
-        {/* Logo/Brand Name */}
+        {/* Logo */}
         <h1 style={logoStyle}>
           <Link to="/" style={linkStyle}>
-            {"Creator's Platform"}
+            Creator's Platform
           </Link>
         </h1>
 
-        {/* Navigation Links */}
-        <nav>
+        {/* Navigation */}
+        <nav style={navStyle}>
           <Link to="/" style={navLinkStyle}>Home</Link>
-          <Link to="/login" style={navLinkStyle}>Login</Link>
-          <Link to="/register" style={navLinkStyle}>Register</Link>
+
+          {isAuthenticated() ? (
+            <>
+              <Link to="/dashboard" style={navLinkStyle}>Dashboard</Link>
+
+              <span style={userNameStyle}>
+                Hi, {user?.name}
+              </span>
+
+              <button onClick={logout} style={logoutBtnStyle}>
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" style={navLinkStyle}>Login</Link>
+              <Link to="/register" style={navLinkStyle}>Register</Link>
+            </>
+          )}
         </nav>
       </div>
     </header>
   );
 };
 
-// Basic inline styles (you can move these to CSS later)
+/* styles */
 const headerStyle = {
   backgroundColor: '#333',
   color: 'white',
@@ -48,10 +68,29 @@ const linkStyle = {
   textDecoration: 'none',
 };
 
+const navStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '1.5rem',
+};
+
 const navLinkStyle = {
   color: 'white',
   textDecoration: 'none',
-  marginLeft: '2rem',
+};
+
+const userNameStyle = {
+  fontSize: '0.9rem',
+  color: '#ddd',
+};
+
+const logoutBtnStyle = {
+  padding: '0.4rem 1rem',
+  backgroundColor: '#dc3545',
+  color: 'white',
+  border: 'none',
+  borderRadius: '5px',
+  cursor: 'pointer',
 };
 
 export default Header;
