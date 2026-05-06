@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { showToast } from '../services/toast';
 
 const Dashboard = () => {
   const { user, logout, loading } = useAuth();
@@ -9,7 +10,6 @@ const Dashboard = () => {
   const [pagination, setPagination] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
 
   // ⏳ Wait until auth is checked
   if (loading) {
@@ -32,7 +32,6 @@ const Dashboard = () => {
 
   const fetchPosts = async (page) => {
     setIsLoading(true);
-    setError('');
 
     try {
       const response = await api.get(`/api/posts?page=${page}&limit=10`);
@@ -40,7 +39,7 @@ const Dashboard = () => {
       setPosts(response.data.data);
       setPagination(response.data.pagination);
     } catch (err) {
-      setError('Failed to load posts');
+      showToast.apiError(err);
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -74,12 +73,12 @@ const Dashboard = () => {
           total: prev.total - 1
         }));
 
-        // Optional: Show success message
-        alert('Post deleted successfully');
+        // Show success message
+        showToast.success('Post deleted successfully');
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert(error.response?.data?.message || 'Failed to delete post');
+      showToast.apiError(error);
     }
   };
 
@@ -99,9 +98,6 @@ const Dashboard = () => {
           </button>
         </div>
       </div>
-
-      {/* Error Message */}
-      {error && <div style={errorStyle}>{error}</div>}
 
       {/* Posts List */}
       <div style={postsContainerStyle}>

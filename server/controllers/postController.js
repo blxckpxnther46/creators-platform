@@ -3,16 +3,15 @@ import Post from '../models/Post.js';
 // @desc    Create new post
 // @route   POST /api/posts
 // @access  Private
-export const createPost = async (req, res) => {
+export const createPost = async (req, res, next) => {
   try {
     const { title, content, category, status } = req.body;
 
     // Validate required fields
     if (!title || !content) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide title and content'
-      });
+      const error = new Error('Please provide title and content');
+      error.statusCode = 400;
+      throw error;
     }
 
     // Create post with authenticated user as author
@@ -31,12 +30,7 @@ export const createPost = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Create post error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error creating post',
-      error: error.message
-    });
+    next(error);
   }
 };
 
@@ -129,24 +123,22 @@ export const getPostById = async (req, res) => {
 // @desc    Update post
 // @route   PUT /api/posts/:id
 // @access  Private
-export const updatePost = async (req, res) => {
+export const updatePost = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
 
     // Check if post exists
     if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: 'Post not found'
-      });
+      const error = new Error('Post not found');
+      error.statusCode = 404;
+      throw error;
     }
 
     // Check ownership - CRITICAL SECURITY CHECK
     if (post.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to update this post'
-      });
+      const error = new Error('Not authorized to update this post');
+      error.statusCode = 403;
+      throw error;
     }
 
     // Update fields
@@ -167,49 +159,29 @@ export const updatePost = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Update post error:', error);
-    
-    // Handle validation errors
-    if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors)
-        .map(err => err.message)
-        .join(', ');
-      
-      return res.status(400).json({
-        success: false,
-        message: messages
-      });
-    }
-    
-    res.status(500).json({
-      success: false,
-      message: 'Error updating post',
-      error: error.message
-    });
+    next(error);
   }
 };
 
 // @desc    Delete post
 // @route   DELETE /api/posts/:id
 // @access  Private
-export const deletePost = async (req, res) => {
+export const deletePost = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
 
     // Check if post exists
     if (!post) {
-      return res.status(404).json({
-        success: false,
-        message: 'Post not found'
-      });
+      const error = new Error('Post not found');
+      error.statusCode = 404;
+      throw error;
     }
 
     // Check ownership - CRITICAL SECURITY CHECK
     if (post.author.toString() !== req.user._id.toString()) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to delete this post'
-      });
+      const error = new Error('Not authorized to delete this post');
+      error.statusCode = 403;
+      throw error;
     }
 
     // Delete the post
@@ -222,11 +194,6 @@ export const deletePost = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Delete post error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting post',
-      error: error.message
-    });
+    next(error);
   }
 };
