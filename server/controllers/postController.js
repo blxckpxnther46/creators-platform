@@ -32,6 +32,19 @@ export const createPost = async (req, res) => {
 
   } catch (error) {
     console.error('Create post error:', error);
+    
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors)
+        .map(err => err.message)
+        .join(', ');
+      
+      return res.status(400).json({
+        success: false,
+        message: messages
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Error creating post',
