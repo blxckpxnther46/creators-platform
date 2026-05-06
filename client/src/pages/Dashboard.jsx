@@ -51,6 +51,38 @@ const Dashboard = () => {
     setCurrentPage(newPage);
   };
 
+  const handleDelete = async (postId) => {
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      'Are you sure you want to delete this post? This action cannot be undone.'
+    );
+
+    if (!confirmed) {
+      return; // User cancelled
+    }
+
+    try {
+      const response = await api.delete(`/api/posts/${postId}`);
+
+      if (response.data.success) {
+        // Remove post from UI immediately (optimistic update)
+        setPosts(posts.filter(post => post._id !== postId));
+        
+        // Update pagination count
+        setPagination(prev => ({
+          ...prev,
+          total: prev.total - 1
+        }));
+
+        // Optional: Show success message
+        alert('Post deleted successfully');
+      }
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert(error.response?.data?.message || 'Failed to delete post');
+    }
+  };
+
   return (
     <div style={containerStyle}>
       {/* Header with Create Button */}
@@ -94,6 +126,22 @@ const Dashboard = () => {
                     {post.status}
                   </span>
                   <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={actionsStyle}>
+                  <Link to={`/edit/${post._id}`}>
+                    <button style={editButtonStyle}>
+                      Edit
+                    </button>
+                  </Link>
+                  
+                  <button 
+                    onClick={() => handleDelete(post._id)}
+                    style={deleteButtonStyle}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             ))}
@@ -255,6 +303,35 @@ const paginationButtonStyle = {
 const pageInfoStyle = {
   color: '#666',
   fontSize: '0.9rem'
+};
+
+const actionsStyle = {
+  display: 'flex',
+  gap: '1rem',
+  marginTop: '1rem',
+};
+
+const editButtonStyle = {
+  padding: '0.5rem 1rem',
+  backgroundColor: '#007bff',
+  color: 'white',
+  border: 'none',
+  borderRadius: '4px',
+  cursor: 'pointer',
+  fontSize: '0.9rem',
+  fontWeight: '500',
+  textDecoration: 'none'
+};
+
+const deleteButtonStyle = {
+  padding: '0.5rem 1rem',
+  backgroundColor: '#dc3545',
+  color: 'white',
+  border: 'none',
+  borderRadius: '4px',
+  cursor: 'pointer',
+  fontSize: '0.9rem',
+  fontWeight: '500'
 };
 
 export default Dashboard;
