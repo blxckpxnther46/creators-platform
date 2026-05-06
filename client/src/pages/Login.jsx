@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -24,26 +25,22 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email.toLowerCase().trim(),
-          password: formData.password
-        })
+      const response = await api.post('/api/auth/login', {
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password
       });
 
-      const data = await res.json();
+      const data = response.data;
 
-      if (res.ok) {
+      if (data.success) {
         login(data.user, data.token); // ✅ USE CONTEXT
         navigate('/dashboard');
       } else {
         setError(data.message);
       }
 
-    } catch {
-      setError('Server error');
+    } catch (error) {
+      setError(error.response?.data?.message || 'Server error');
     }
 
     setLoading(false);

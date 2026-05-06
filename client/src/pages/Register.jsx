@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import api from '../services/api';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -43,26 +44,22 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const res = await fetch('/api/users/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password
-        })
+      const response = await api.post('/api/users/register', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
       });
 
-      const data = await res.json();
+      const data = response.data;
 
-      if (res.ok) {
+      if (data.success) {
         setSuccess('Account created! Redirecting...');
         setTimeout(() => navigate('/login'), 2000);
       } else {
         setApiError(data.message);
       }
-    } catch {
-      setApiError('Server error');
+    } catch (error) {
+      setApiError(error.response?.data?.message || 'Server error');
     }
 
     setLoading(false);
