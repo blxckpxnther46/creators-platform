@@ -5,7 +5,8 @@ import cors from 'cors';
 import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
-import postRoutes from './routes/postRoutes.js'; 
+import postRoutes from './routes/postRoutes.js';
+import { errorHandler } from './middleware/errorHandler.js'; 
 
 // Connect to database
 connectDB();
@@ -34,6 +35,17 @@ app.get('/api/health', (req, res) => {
     database: 'Connected'
   });
 });
+
+// 404 handler - must come before error handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
+
+// Global error-handling middleware (MUST be last)
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {

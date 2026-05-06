@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { showToast } from '../services/toast';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,7 +13,6 @@ const Login = () => {
     password: ''
   });
 
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -21,7 +21,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
@@ -34,13 +33,15 @@ const Login = () => {
 
       if (data.success) {
         login(data.user, data.token); // ✅ USE CONTEXT
+        showToast.success('Logged in successfully!');
         navigate('/dashboard');
       } else {
-        setError(data.message);
+        showToast.error(data.message);
       }
 
     } catch (error) {
-      setError(error.response?.data?.message || 'Server error');
+      const message = error.response?.data?.message || error.message || 'Failed to login';
+      showToast.apiError(error);
     }
 
     setLoading(false);
@@ -49,8 +50,6 @@ const Login = () => {
   return (
     <div style={{ padding: '2rem', textAlign: 'center' }}>
       <h2>Login</h2>
-
-      {error && <p style={{ color: 'red' }}>{error}</p>}
 
       <form onSubmit={handleSubmit}>
         <input name="email" placeholder="Email" onChange={handleChange} />

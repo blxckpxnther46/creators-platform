@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { showToast } from '../services/toast';
 
 const EditPost = () => {
   const { id } = useParams(); // Get post ID from URL
@@ -14,7 +15,7 @@ const EditPost = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [hasError, setHasError] = useState(false);
 
   // Fetch post data when component mounts
   useEffect(() => {
@@ -37,7 +38,8 @@ const EditPost = () => {
       setIsLoading(false);
     } catch (err) {
       console.error('Fetch error:', err);
-      setError(err.response?.data?.message || 'Failed to load post');
+      showToast.apiError(err);
+      setHasError(true);
       setIsLoading(false);
     }
   };
@@ -51,18 +53,18 @@ const EditPost = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setIsSaving(true);
 
     try {
       const response = await api.put(`/api/posts/${id}`, formData);
       
       if (response.data.success) {
+        showToast.success('Post updated successfully!');
         // Redirect to dashboard after successful update
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to update post');
+      showToast.apiError(err);
       setIsSaving(false);
     }
   };
@@ -71,16 +73,14 @@ const EditPost = () => {
     return <div style={loadingStyle}>Loading post...</div>;
   }
 
-  if (error && !formData.title) {
-    return <div style={errorPageStyle}>{error}</div>;
+  if (hasError) {
+    return <div style={errorPageStyle}>Failed to load post. Please try again.</div>;
   }
 
   return (
     <div style={containerStyle}>
       <div style={formContainerStyle}>
         <h1>Edit Post</h1>
-        
-        {error && <div style={errorStyle}>{error}</div>}
 
         <form onSubmit={handleSubmit} style={formStyle}>
           {/* Title */}

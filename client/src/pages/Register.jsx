@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { showToast } from '../services/toast';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -14,8 +15,6 @@ const Register = () => {
 
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,8 +35,6 @@ const Register = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setApiError('');
-    setSuccess('');
 
     if (!validate()) return;
 
@@ -53,13 +50,13 @@ const Register = () => {
       const data = response.data;
 
       if (data.success) {
-        setSuccess('Account created! Redirecting...');
+        showToast.success('Account created successfully!');
         setTimeout(() => navigate('/login'), 2000);
       } else {
-        setApiError(data.message);
+        showToast.error(data.message);
       }
     } catch (error) {
-      setApiError(error.response?.data?.message || 'Server error');
+      showToast.apiError(error);
     }
 
     setLoading(false);
@@ -85,9 +82,6 @@ const Register = () => {
         <button disabled={loading}>
           {loading ? 'Creating...' : 'Register'}
         </button>
-
-        {apiError && <p style={{ color: 'red' }}>{apiError}</p>}
-        {success && <p style={{ color: 'green' }}>{success}</p>}
 
         <p>Already have an account? <Link to="/login">Login</Link></p>
       </form>

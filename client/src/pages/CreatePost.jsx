@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { showToast } from '../services/toast';
 
 const CreatePost = () => {
   const [formData, setFormData] = useState({
@@ -10,7 +11,6 @@ const CreatePost = () => {
     status: 'draft'
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
   
   const navigate = useNavigate();
 
@@ -23,18 +23,18 @@ const CreatePost = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setIsLoading(true);
 
     try {
       const response = await api.post('/api/posts', formData);
       
       if (response.data.success) {
+        showToast.success('Post created successfully!');
         // Redirect to dashboard after successful creation
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to create post');
+      showToast.apiError(err);
     } finally {
       setIsLoading(false);
     }
@@ -44,8 +44,6 @@ const CreatePost = () => {
     <div style={containerStyle}>
       <div style={formContainerStyle}>
         <h1>Create New Post</h1>
-        
-        {error && <div style={errorStyle}>{error}</div>}
 
         <form onSubmit={handleSubmit} style={formStyle}>
           {/* Title */}
