@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -55,12 +55,8 @@ const Dashboard = () => {
     };
   }, []);
 
-  // Fetch posts when component mounts or page changes
-  useEffect(() => {
-    fetchPosts(currentPage);
-  }, [currentPage]);
-
-  const fetchPosts = async (page) => {
+  // Define fetchPosts with useCallback BEFORE using it in useEffect
+  const fetchPosts = useCallback(async (page) => {
     setIsLoading(true);
 
     try {
@@ -74,7 +70,12 @@ const Dashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Fetch posts when component mounts or page changes
+  useEffect(() => {
+    fetchPosts(currentPage);
+  }, [currentPage, fetchPosts]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
