@@ -4,6 +4,7 @@ dotenv.config();
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
+import jwt from 'jsonwebtoken';
 import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -46,7 +47,7 @@ app.use(express.json());
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/posts', postRoutes); 
+app.use('/api/posts', postRoutes(io)); // Pass io to postRoutes 
 
 // Health check endpoint (keep this for testing)
 app.get('/api/health', (req, res) => {
@@ -68,9 +69,26 @@ app.use((req, res) => {
 // Global error-handling middleware (MUST be last)
 app.use(errorHandler);
 
+// Socket.io middleware - verify JWT before accepting connection
+io.use((socket, next) => {
+  const token = socket.handshake.auth.token;
+
+  if (!token) {
+    return next(new Error('Authentication error: No token provided'));
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your_jwt_secret_key');
+    socket.data.user = decoded;
+    next();
+  } catch (error) {
+    next(new Error('Authentication error: Invalid token'));
+  }
+});
+
 // Socket.io connection handling
 io.on('connection', (socket) => {
-  console.log(`✅ User connected: ${socket.id}`);
+  console.log(`✅ User connected: ${socket.id} | User: ${socket.data.user.email}`);
 
   // Handle disconnection
   socket.on('disconnect', (reason) => {
