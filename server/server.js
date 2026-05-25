@@ -22,25 +22,25 @@ const httpServer = createServer(app);
 // Initialize Socket.io with CORS configuration
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'http://127.0.0.1:5173',
+      'http://127.0.0.1:3000'
+    ],
     methods: ['GET', 'POST'],
     credentials: true
   }
 });
 
-// Middleware
+// Middleware - CORS MUST be first
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow localhost on any port or if no origin (like curl requests)
-    if (!origin || /^http:\/\/localhost:\d+$/.test(origin) || /^http:\/\/127\.0\.0\.1:\d+$/.test(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('CORS not allowed'));
-    }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200
+  origin: '*',
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
+
 app.use(express.json());
 
 // Routes
