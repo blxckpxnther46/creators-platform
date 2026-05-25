@@ -16,11 +16,11 @@ const result = dotenv.config({ path: envPath });
 console.log('📂 dotenv.config() result:', result.parsed ? '✅ loaded' : '❌ failed');
 if (result.parsed) {
   console.log('📂 Found variables:', Object.keys(result.parsed).length);
+  console.log('📂 CLOUDINARY_API_KEY present:', !!result.parsed.CLOUDINARY_API_KEY);
 }
 
 // NOW import everything else - environment variables are ready
 import express from 'express';
-
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -29,8 +29,10 @@ import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import postRoutes from './routes/postRoutes.js';
-import uploadRoutes from './routes/upload.js'; // Cloudinary config now has env vars
-import { errorHandler } from './middleware/errorHandler.js'; 
+import { errorHandler } from './middleware/errorHandler.js';
+
+// Dynamically import cloudinary-dependent routes AFTER env vars are loaded
+const { default: uploadRoutes } = await import('./routes/upload.js');
 
 // Connect to database
 connectDB();
