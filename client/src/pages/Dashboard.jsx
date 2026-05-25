@@ -150,6 +150,20 @@ const Dashboard = () => {
           <>
             {posts.map((post) => (
               <div key={post._id} style={postCardStyle}>
+                {/* Conditionally render cover image */}
+                {post.coverImage && (
+                  <img
+                    src={post.coverImage}
+                    alt={`Cover image for ${post.title}`}
+                    style={{
+                      width: '100%',
+                      maxHeight: '200px',
+                      objectFit: 'cover',
+                      borderRadius: '4px',
+                      marginBottom: '1rem'
+                    }}
+                  />
+                )}
                 <h3>{post.title}</h3>
                 <p style={contentPreviewStyle}>
                   {post.content.substring(0, 150)}...

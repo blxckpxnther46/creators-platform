@@ -15,7 +15,7 @@ const postRoutes = (io) => {
   // Create a wrapper for createPost that includes Socket.io emission
   const createPostWithNotification = async (req, res, next) => {
     try {
-      const { title, content, category, status } = req.body;
+      const { title, content, category, status, coverImage } = req.body;
 
       // Validate required fields
       if (!title || !content) {
@@ -33,6 +33,7 @@ const postRoutes = (io) => {
         content,
         category,
         status,
+        coverImage: coverImage || null,
         author: req.user._id
       });
 

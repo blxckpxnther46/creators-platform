@@ -12,7 +12,9 @@ const CreatePost = () => {
     status: 'draft'
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
+  const [uploadError, setUploadError] = useState('');
   
   const navigate = useNavigate();
 
@@ -24,12 +26,13 @@ const CreatePost = () => {
   };
 
   // Handle image upload
-  const handleUpload = async (formData) => {
+  const handleUpload = async (formDataObj) => {
+    setUploading(true);
+    setUploadError('');
+    
     try {
-      setIsLoading(true);
-      
       // Send to backend /api/upload endpoint
-      const response = await api.post('/api/upload', formData, {
+      const response = await api.post('/api/upload', formDataObj, {
         headers: {
           // IMPORTANT: Set Content-Type to undefined so axios doesn't override it
           // The browser will automatically set it to multipart/form-data with the correct boundary
@@ -41,24 +44,51 @@ const CreatePost = () => {
         setUploadedImageUrl(response.data.data.url);
         showToast.success('Image uploaded successfully!');
         console.log('📤 Uploaded image URL:', response.data.data.url);
+        // TODO: Consider orphaned uploads - if user changes image, old one remains on Cloudinary
       }
     } catch (error) {
-      console.error('Upload error:', error);
-      showToast.apiError(error);
+      console.error('❌ Upload error:', error);
+      const errorMsg = error.response?.data?.message || 'Image upload failed';
+      setUploadError(errorMsg);
+      showToast.error(errorMsg);
     } finally {
-      setIsLoading(false);
+      setUploading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate required fields
+    if (!formData.title || !formData.content) {
+      showToast.error('Title and content are required');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const response = await api.post('/api/posts', formData);
+      // Include the uploaded image URL in the post data
+      const postData = {
+        ...formData,
+        coverImage: uploadedImageUrl // Can be null if no image was uploaded
+      };
+
+      const response = await api.post('/api/posts', postData);
       
       if (response.data.success) {
         showToast.success('Post created successfully!');
+        
+        // Reset form
+        setFormData({
+          title: '',
+          content: '',
+          category: 'Technology',
+          status: 'draft'
+        });
+        setUploadedImageUrl(null);
+        setUploadError('');
+        
         // Redirect to dashboard after successful creation
         navigate('/dashboard');
       }
@@ -124,16 +154,27 @@ const CreatePost = () => {
             <ImageUpload onUpload={handleUpload} />
           </div>
 
+          {/* Upload loading state */}
+          {uploading && (
+            <p style={{ color: '#007bff', fontWeight: '500' }}>📤 Uploading image, please wait...</p>
+          )}
+
+          {/* Upload error message */}
+          {uploadError && (
+            <p style={{ color: '#dc3545', fontWeight: '500' }}>
+              ❌ {uploadError}
+            </p>
+          )}
+
           {/* Display uploaded image */}
           {uploadedImageUrl && (
             <div style={uploadedImageContainerStyle}>
               <p style={uploadedImageLabelStyle}>✅ Image uploaded:</p>
               <img 
                 src={uploadedImageUrl} 
-                alt="Uploaded" 
+                alt="Cover image preview" 
                 style={uploadedImageStyle}
               />
-              <p style={uploadedUrlStyle}>{uploadedImageUrl}</p>
             </div>
           )}
 
@@ -153,10 +194,14 @@ const CreatePost = () => {
 
           <button 
             type="submit" 
-            disabled={isLoading}
-            style={buttonStyle}
+            disabled={isLoading || uploading}
+            style={{
+              ...buttonStyle,
+              opacity: (isLoading || uploading) ? 0.7 : 1,
+              cursor: (isLoading || uploading) ? 'not-allowed' : 'pointer'
+            }}
           >
-            {isLoading ? 'Creating...' : 'Create Post'}
+            {isLoading ? 'Creating...' : uploading ? 'Uploading...' : 'Create Post'}
           </button>
         </form>
       </div>
