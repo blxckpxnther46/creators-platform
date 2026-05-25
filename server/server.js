@@ -2,6 +2,8 @@ import express from 'express';
 import dotenv from 'dotenv';
 dotenv.config();
 import cors from 'cors';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
@@ -13,6 +15,18 @@ connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Create HTTP server from Express app
+const httpServer = createServer(app);
+
+// Initialize Socket.io with CORS configuration
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
 
 // Middleware
 app.use(cors({
@@ -54,7 +68,21 @@ app.use((req, res) => {
 // Global error-handling middleware (MUST be last)
 app.use(errorHandler);
 
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log(`✅ User connected: ${socket.id}`);
+
+  // Handle disconnection
+  socket.on('disconnect', (reason) => {
+    console.log(`❌ User disconnected: ${socket.id} (${reason})`);
+  });
+});
+
+// Make io accessible to routes if needed
+app.set('io', io);
+
 // Start server
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`🔌 Socket.io ready for connections`);
 });
