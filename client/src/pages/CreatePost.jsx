@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { showToast } from '../services/toast';
+import ImageUpload from '../components/ImageUpload';
 
 const CreatePost = () => {
   const [formData, setFormData] = useState({
@@ -11,6 +12,7 @@ const CreatePost = () => {
     status: 'draft'
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState(null);
   
   const navigate = useNavigate();
 
@@ -19,6 +21,31 @@ const CreatePost = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  // Handle image upload
+  const handleUpload = async (formData) => {
+    try {
+      setIsLoading(true);
+      
+      // Send to backend /api/upload endpoint
+      const response = await api.post('/api/upload', formData, {
+        headers: {
+          // Don't set Content-Type manually - let FormData handle it
+        }
+      });
+
+      if (response.data.success) {
+        setUploadedImageUrl(response.data.data.url);
+        showToast.success('Image uploaded successfully!');
+        console.log('📤 Uploaded image URL:', response.data.data.url);
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      showToast.apiError(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -76,7 +103,25 @@ const CreatePost = () => {
 
           {/* Category */}
           <div style={fieldStyle}>
-            <label>Category</label>
+            <lab
+
+          {/* Image Upload */}
+          <div style={fieldStyle}>
+            <ImageUpload onUpload={handleUpload} />
+          </div>
+
+          {/* Display uploaded image */}
+          {uploadedImageUrl && (
+            <div style={uploadedImageContainerStyle}>
+              <p style={uploadedImageLabelStyle}>✅ Image uploaded:</p>
+              <img 
+                src={uploadedImageUrl} 
+                alt="Uploaded" 
+                style={uploadedImageStyle}
+              />
+              <p style={uploadedUrlStyle}>{uploadedImageUrl}</p>
+            </div>
+          )}el>Category</label>
             <select
               name="category"
               value={formData.category}
@@ -180,6 +225,38 @@ const errorStyle = {
   borderRadius: '4px',
   marginBottom: '1rem',
   border: '1px solid #f5c6cb'
+};
+
+const uploadedImageContainerStyle = {
+  padding: '1rem',
+  backgroundColor: '#e8f5e9',
+  borderRadius: '6px',
+  border: '2px solid #4caf50',
+  textAlign: 'center'
+};
+
+const uploadedImageLabelStyle = {
+  fontWeight: 'bold',
+  color: '#2e7d32',
+  marginBottom: '0.5rem',
+  fontSize: '0.95rem'
+};
+
+const uploadedImageStyle = {
+  width: '100%',
+  maxWidth: '300px',
+  height: 'auto',
+  borderRadius: '4px',
+  marginBottom: '0.5rem',
+  border: '1px solid #ddd'
+};
+
+const uploadedUrlStyle = {
+  fontSize: '0.8rem',
+  color: '#666',
+  wordBreak: 'break-all',
+  margin: '0.5rem 0 0 0',
+  fontFamily: 'monospace'
 };
 
 export default CreatePost;
