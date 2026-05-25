@@ -5,7 +5,7 @@ import Post from '../models/Post.js';
 // @access  Private
 export const createPost = async (req, res, next) => {
   try {
-    const { title, content, category, status } = req.body;
+    const { title, content, category, status, coverImage } = req.body;
 
     // Validate required fields
     if (!title || !content) {
@@ -20,6 +20,7 @@ export const createPost = async (req, res, next) => {
       content,
       category,
       status,
+      coverImage: coverImage || null, // Optional - can be null for text-only posts
       author: req.user._id // From protect middleware
     });
 
@@ -142,12 +143,13 @@ export const updatePost = async (req, res, next) => {
     }
 
     // Update fields
-    const { title, content, category, status } = req.body;
+    const { title, content, category, status, coverImage } = req.body;
     
     if (title) post.title = title;
     if (content) post.content = content;
     if (category) post.category = category;
     if (status) post.status = status;
+    if (coverImage !== undefined) post.coverImage = coverImage; // Can be null to remove image
 
     // Save updated post
     const updatedPost = await post.save();

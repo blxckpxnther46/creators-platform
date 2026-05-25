@@ -4,9 +4,8 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000',
   timeout: 10000, // 10 second timeout
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  // NOTE: Do NOT set Content-Type globally - it breaks FormData uploads
+  // When uploading files, axios will automatically set Content-Type to multipart/form-data
 });
 
 // Request interceptor - attach token to outgoing requests

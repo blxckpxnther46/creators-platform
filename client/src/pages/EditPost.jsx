@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { showToast } from '../services/toast';
+import ImageUpload from '../components/ImageUpload';
 
 const EditPost = () => {
   const { id } = useParams(); // Get post ID from URL
@@ -16,6 +17,9 @@ const EditPost = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const [coverImageUrl, setCoverImageUrl] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   // Fetch post data when component mounts
   useEffect(() => {
@@ -35,6 +39,11 @@ const EditPost = () => {
         status: post.status
       });
       
+      // Load existing cover image
+      if (post.coverImage) {
+        setCoverImageUrl(post.coverImage);
+      }
+      
       setIsLoading(false);
     } catch (err) {
       console.error('Fetch error:', err);
@@ -51,12 +60,44 @@ const EditPost = () => {
     });
   };
 
+  // Handle image upload
+  const handleUpload = async (formDataObj) => {
+    setUploading(true);
+    setUploadError('');
+    
+    try {
+      const response = await api.post('/api/upload', formDataObj, {
+        headers: {
+          'Content-Type': undefined
+        }
+      });
+
+      if (response.data.success) {
+        setCoverImageUrl(response.data.data.url);
+        showToast.success('Image uploaded successfully!');
+        // TODO: Consider orphaned uploads - if user changes image, old one remains on Cloudinary
+      }
+    } catch (error) {
+      console.error('❌ Upload error:', error);
+      const errorMsg = error.response?.data?.message || 'Image upload failed';
+      setUploadError(errorMsg);
+      showToast.error(errorMsg);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSaving(true);
 
     try {
-      const response = await api.put(`/api/posts/${id}`, formData);
+      const postData = {
+        ...formData,
+        coverImage: coverImageUrl
+      };
+      
+      const response = await api.put(`/api/posts/${id}`, postData);
       
       if (response.data.success) {
         showToast.success('Post updated successfully!');
@@ -126,6 +167,35 @@ const EditPost = () => {
               <option value="Food">Food</option>
             </select>
           </div>
+
+          {/* Image Upload */}
+          <div style={fieldStyle}>
+            <ImageUpload onUpload={handleUpload} />
+          </div>
+
+          {/* Upload loading state */}
+          {uploading && (
+            <p style={{ color: '#007bff', fontWeight: '500' }}>📤 Uploading image, please wait...</p>
+          )}
+
+          {/* Upload error message */}
+          {uploadError && (
+            <p style={{ color: '#dc3545', fontWeight: '500' }}>
+              ❌ {uploadError}
+            </p>
+          )}
+
+          {/* Display uploaded image */}
+          {coverImageUrl && (
+            <div style={uploadedImageContainerStyle}>
+              <p style={uploadedImageLabelStyle}>✅ Image:</p>
+              <img 
+                src={coverImageUrl} 
+                alt="Cover image preview" 
+                style={uploadedImageStyle}
+              />
+            </div>
+          )}
 
           {/* Status */}
           <div style={fieldStyle}>
@@ -263,6 +333,27 @@ const errorPageStyle = {
   textAlign: 'center',
   color: '#721c24',
   backgroundColor: '#f8d7da'
+};
+
+const uploadedImageContainerStyle = {
+  padding: '1rem',
+  backgroundColor: '#e8f5e9',
+  borderRadius: '4px',
+  marginTop: '1rem',
+  border: '1px solid #c8e6c9'
+};
+
+const uploadedImageLabelStyle = {
+  margin: '0 0 0.5rem 0',
+  fontWeight: '600',
+  color: '#2e7d32'
+};
+
+const uploadedImageStyle = {
+  width: '100%',
+  maxHeight: '200px',
+  objectFit: 'cover',
+  borderRadius: '4px'
 };
 
 export default EditPost;
