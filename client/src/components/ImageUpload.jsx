@@ -62,9 +62,7 @@ const ImageUpload = ({ onUpload }) => {
   }, [previewUrl]);
 
   // Handle form submission
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
+  const handleSubmit = () => {
     if (!selectedFile) {
       setError('Please select an image first');
       return;
@@ -81,7 +79,7 @@ const ImageUpload = ({ onUpload }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={formStyle}>
+    <div style={formStyle}>
       <div style={formGroupStyle}>
         <label htmlFor="image-input" style={labelStyle}>
           Upload Image
@@ -119,7 +117,8 @@ const ImageUpload = ({ onUpload }) => {
 
         {/* Submit button */}
         <button
-          type="submit"
+          type="button"
+          onClick={handleSubmit}
           disabled={!selectedFile || !!error}
           style={{
             ...buttonStyle,
@@ -130,7 +129,7 @@ const ImageUpload = ({ onUpload }) => {
           {selectedFile ? '📤 Upload Image' : 'Select an Image First'}
         </button>
       </div>
-    </form>
+    </div>
   );
 };
 

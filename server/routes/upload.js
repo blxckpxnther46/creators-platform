@@ -22,17 +22,24 @@ const uploadToCloudinary = (buffer) => {
 // Upload file to Cloudinary
 router.post('/', protect, upload.single('image'), async (req, res) => {
   try {
+    console.log('📤 Upload request received');
+    console.log('  - User:', req.user?.email);
+    console.log('  - File:', req.file ? '✅ present' : '❌ missing');
+    
     // Check if file was uploaded
     if (!req.file) {
+      console.log('❌ No file in request');
       return res.status(400).json({
         success: false,
         message: 'No file uploaded'
       });
     }
 
+    console.log('📦 Uploading to Cloudinary...');
     // Upload buffer to Cloudinary
     const result = await uploadToCloudinary(req.file.buffer);
 
+    console.log('✅ Upload successful:', result.secure_url);
     // Return secure URL and public ID
     res.status(200).json({
       success: true,
@@ -46,7 +53,7 @@ router.post('/', protect, upload.single('image'), async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Upload error:', error);
+    console.error('❌ Upload error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Failed to upload file',

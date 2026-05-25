@@ -31,7 +31,9 @@ const CreatePost = () => {
       // Send to backend /api/upload endpoint
       const response = await api.post('/api/upload', formData, {
         headers: {
-          // Don't set Content-Type manually - let FormData handle it
+          // IMPORTANT: Set Content-Type to undefined so axios doesn't override it
+          // The browser will automatically set it to multipart/form-data with the correct boundary
+          'Content-Type': undefined
         }
       });
 
@@ -103,7 +105,19 @@ const CreatePost = () => {
 
           {/* Category */}
           <div style={fieldStyle}>
-            <lab
+            <label>Category</label>
+            <select
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              style={inputStyle}
+            >
+              <option value="Technology">Technology</option>
+              <option value="Lifestyle">Lifestyle</option>
+              <option value="Travel">Travel</option>
+              <option value="Food">Food</option>
+            </select>
+          </div>
 
           {/* Image Upload */}
           <div style={fieldStyle}>
@@ -121,19 +135,7 @@ const CreatePost = () => {
               />
               <p style={uploadedUrlStyle}>{uploadedImageUrl}</p>
             </div>
-          )}el>Category</label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              style={inputStyle}
-            >
-              <option value="Technology">Technology</option>
-              <option value="Lifestyle">Lifestyle</option>
-              <option value="Travel">Travel</option>
-              <option value="Food">Food</option>
-            </select>
-          </div>
+          )}
 
           {/* Status */}
           <div style={fieldStyle}>

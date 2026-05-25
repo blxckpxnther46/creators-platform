@@ -1,6 +1,26 @@
-import express from 'express';
 import dotenv from 'dotenv';
-dotenv.config();
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+// Get the directory of the current file
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const envPath = path.join(__dirname, '.env');
+console.log('📂 Looking for .env at:', envPath);
+console.log('📂 .env exists:', fs.existsSync(envPath) ? '✅' : '❌');
+
+// Load environment variables from the server directory BEFORE any other imports
+const result = dotenv.config({ path: envPath });
+console.log('📂 dotenv.config() result:', result.parsed ? '✅ loaded' : '❌ failed');
+if (result.parsed) {
+  console.log('📂 Found variables:', Object.keys(result.parsed).length);
+}
+
+// NOW import everything else - environment variables are ready
+import express from 'express';
+
 import cors from 'cors';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
@@ -9,7 +29,7 @@ import connectDB from './config/database.js';
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import postRoutes from './routes/postRoutes.js';
-import uploadRoutes from './routes/upload.js';
+import uploadRoutes from './routes/upload.js'; // Cloudinary config now has env vars
 import { errorHandler } from './middleware/errorHandler.js'; 
 
 // Connect to database
