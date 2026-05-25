@@ -3,6 +3,7 @@ import { Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { showToast } from '../services/toast';
+import socket from '../services/socket';
 
 const Dashboard = () => {
   const { user, logout, loading } = useAuth();
@@ -24,6 +25,35 @@ const Dashboard = () => {
   if (!user) {
     return <Navigate to="/login" />;
   }
+
+  // Socket.io connection handling
+  useEffect(() => {
+    // Connect socket when component mounts (user is logged in)
+    socket.connect();
+
+    // Listen for successful connection
+    socket.on('connect', () => {
+      console.log('🔌 Socket connected:', socket.id);
+    });
+
+    // Listen for disconnection
+    socket.on('disconnect', (reason) => {
+      console.log('❌ Socket disconnected:', reason);
+    });
+
+    // Listen for connection errors
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+    });
+
+    // Cleanup when component unmounts
+    return () => {
+      socket.off('connect');
+      socket.off('disconnect');
+      socket.off('connect_error');
+      socket.disconnect();
+    };
+  }, []);
 
   // Fetch posts when component mounts or page changes
   useEffect(() => {

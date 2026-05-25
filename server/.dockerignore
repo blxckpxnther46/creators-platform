@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log
+.env
+.env.local
+.git
+.gitignore
+.DS_Store
+.vscode
+.idea
+dist
+build
+.dockerignore
+Dockerfile
+README.md
+.editorconfig
+.prettierrc
