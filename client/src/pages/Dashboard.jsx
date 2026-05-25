@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link, Navigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { showToast } from '../services/toast';
@@ -43,7 +44,12 @@ const Dashboard = () => {
 
     // Listen for connection errors
     socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error.message);
+      console.error('Socket auth error:', error.message);
+    });
+
+    // Listen for new posts from other users
+    socket.on('newPost', (data) => {
+      toast.success(data.message);
     });
 
     // Cleanup when component unmounts
@@ -51,6 +57,7 @@ const Dashboard = () => {
       socket.off('connect');
       socket.off('disconnect');
       socket.off('connect_error');
+      socket.off('newPost');
       socket.disconnect();
     };
   }, []);
