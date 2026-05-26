@@ -75,25 +75,27 @@ services:
     ports:
       - "5000:5000"
     
-    # Environment variables
-    environment:
-      # Application environment
-      NODE_ENV: production
-      PORT: 5000
-      
-      # Database connection
-      # Uses service name 'mongo' as hostname (Docker Compose DNS)
-      # This only works within the Docker network
-      MONGODB_URI: mongodb://mongo:27017/creators-platform
-      
-      # JWT authentication secret
-      # Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-      JWT_SECRET: ${JWT_SECRET}
-      
-      # Cloudinary cloud storage (for image uploads)
-      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
-      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
-      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
+    # ============================================
+    # Environment Variables Strategy
+    # Security Best Practice: Use env_file instead of inline variables
+    # 
+    # Load order (highest to lowest priority):
+    # 1. Inline environment (overrides)
+    # 2. env_file values (from .env files)
+    # 3. Dockerfile defaults
+    #
+    # Files loaded:
+    # - ./server/.env (base configuration)
+    # - ./server/.env.docker (Docker-specific overrides: mongo:27017, NODE_ENV=production)
+    #
+    # Why separate files:
+    # - server/.env: Local development values (localhost:27017)
+    # - server/.env.docker: Docker Compose overrides (mongo:27017)
+    # - No secrets appear in this Compose file (safer)
+    # ============================================
+    env_file:
+      - ./server/.env
+      - ./server/.env.docker
     
     # Restart policy
     restart: unless-stopped
