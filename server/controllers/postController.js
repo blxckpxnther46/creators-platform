@@ -35,9 +35,14 @@ export const createPost = async (req, res, next) => {
   }
 };
 
-// @desc    Get posts with pagination
+// @desc    Get posts with pagination - OPTIMIZED
 // @route   GET /api/posts?page=1&limit=10
 // @access  Private
+// Performance optimizations:
+// - .select() to return only needed fields
+// - .populate() to avoid N+1 queries
+// - .lean() to return plain objects (faster for read-only)
+// - Promise.all() to run count and query in parallel
 export const getPosts = async (req, res) => {
   try {
     // Get page and limit from query params (with defaults)
@@ -47,15 +52,17 @@ export const getPosts = async (req, res) => {
     // Calculate skip value
     const skip = (page - 1) * limit;
 
-    // Get posts for logged-in user only
-    const posts = await Post.find({ author: req.user._id })
-      .sort({ createdAt: -1 }) // Newest first
-      .skip(skip)
-      .limit(limit)
-      .populate('author', 'name email'); // Include author info
-
-    // Get total count for pagination
-    const total = await Post.countDocuments({ author: req.user._id });
+    // Run count and query in parallel for better performance
+    const [posts, total] = await Promise.all([
+      Post.find({ author: req.user._id })
+        .select('title content author createdAt category status coverImage') // Only needed fields
+        .populate('author', 'name email avatar')  // Avoid N+1: get author data in one query
+        .sort({ createdAt: -1 }) // Newest first (uses index)
+        .skip(skip)
+        .limit(limit)
+        .lean(), // Return plain objects instead of Mongoose documents (faster)
+      Post.countDocuments({ author: req.user._id })
+    ]);
 
     // Calculate total pages
     const totalPages = Math.ceil(total / limit);
@@ -83,13 +90,14 @@ export const getPosts = async (req, res) => {
   }
 };
 
-// @desc    Get single post by ID
+// @desc    Get single post by ID - OPTIMIZED
 // @route   GET /api/posts/:id
 // @access  Private
+// Performance note: Single item routes can return more fields since it's just one document
 export const getPostById = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
-      .populate('author', 'name email');
+      .populate('author', 'name email avatar'); // Populate author in one query (no N+1)
 
     if (!post) {
       return res.status(404).json({

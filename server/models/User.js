@@ -32,6 +32,10 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Add indexes for frequently queried fields
+// Email is used in authentication and must be unique
+userSchema.index({ email: 1 });
+
 const User = mongoose.model('User', userSchema);
 
 export default User;

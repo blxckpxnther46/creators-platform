@@ -38,6 +38,15 @@ const postSchema = new mongoose.Schema(
   }
 );
 
+// Add indexes for frequently queried and sorted fields
+// Single-field indexes
+postSchema.index({ author: 1 });      // Filter by author
+postSchema.index({ createdAt: -1 });  // Sort by creation date
+
+// Compound index: filter by author + sort by creation date
+// This optimizes queries that filter by author and sort by createdAt
+postSchema.index({ author: 1, createdAt: -1 });
+
 const Post = mongoose.model('Post', postSchema);
 
 export default Post;
