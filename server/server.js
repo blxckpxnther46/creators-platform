@@ -26,6 +26,7 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import connectDB from './config/database.js';
+import timingMiddleware from './middleware/timing.js'; // Performance monitoring
 import userRoutes from './routes/userRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import postRoutes from './routes/postRoutes.js';
@@ -66,6 +67,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Add timing middleware for performance monitoring
+app.use(timingMiddleware);
 
 // Routes
 app.use('/api/users', userRoutes);
