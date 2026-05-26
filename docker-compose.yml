@@ -1,34 +1,104 @@
-version: '3.9'
+# ============================================
+# Docker Compose Configuration
+# Orchestrates full-stack application:
+# - Frontend: React with Nginx (port 3000)
+# - Backend: Node.js/Express (port 5000)
+# - Database: MongoDB (port 27017)
+# ============================================
+
+version: '3.8'
 
 services:
-  # Node.js Backend Service
-  backend:
+  # ============================================
+  # MongoDB Service
+  # Purpose: Database for user and post data
+  # ============================================
+  mongo:
+    image: mongo:7-alpine
+    container_name: creators-platform-mongo
+    
+    # Expose MongoDB port
+    # Only accessible within Docker Compose network by default
+    # For local debugging: localhost:27017
+    ports:
+      - "27017:27017"
+    
+    # Environment setup
+    environment:
+      # Database name created on first startup
+      MONGO_INITDB_DATABASE: creators-platform
+      
+      # Optional: Authentication (comment out for local development)
+      # MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      # MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    
+    # Persistent data storage
+    volumes:
+      # Main database data
+      - mongo-data:/data/db
+      # MongoDB configuration
+      - mongo-config:/data/configdb
+    
+    # Restart policy: Keep running unless manually stopped
+    restart: unless-stopped
+    
+    # Health check: Verify MongoDB is responsive
+    healthcheck:
+      # Check if MongoDB responds to ping command
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      # Run health check every 10 seconds
+      interval: 10s
+      # Wait 5 seconds for response
+      timeout: 5s
+      # Mark unhealthy after 5 failures
+      retries: 5
+    
+    # Connect to creators network for service discovery
+    networks:
+      - creators-network
+
+  # ============================================
+  # Backend Service (Node.js/Express)
+  # Purpose: REST API and business logic
+  # ============================================
+  server:
+    # Build from Dockerfile
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: creators-platform-backend
+    
+    container_name: creators-platform-server
+    
+    # Port mapping: host:container
+    # External: http://localhost:5000
+    # Internal: http://server:5000 (from other containers)
     ports:
       - "5000:5000"
+    
+    # Environment variables
     environment:
-      # Node environment
+      # Application environment
       NODE_ENV: production
       PORT: 5000
       
-      # MongoDB Connection
-      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/creators-platform}
+      # Database connection
+      # Uses service name 'mongo' as hostname (Docker Compose DNS)
+      # This only works within the Docker network
+      MONGODB_URI: mongodb://mongo:27017/creators-platform
       
-      # JWT Secret
-      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      # JWT authentication secret
+      # Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      JWT_SECRET: ${JWT_SECRET}
       
-      # Cloudinary Configuration
+      # Cloudinary cloud storage (for image uploads)
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
     
-    # Restart policy - restart on failure
+    # Restart policy
     restart: unless-stopped
     
-    # Health check
+    # Health check: Verify API is responsive
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (res) => { if (res.statusCode !== 200) throw new Error(res.statusCode) })"]
       interval: 30s
@@ -36,54 +106,88 @@ services:
       retries: 3
       start_period: 40s
     
-    # Volume for logs (optional)
+    # Volumes for persistent logs
     volumes:
-      - ./logs:/app/logs
+      - ./server/logs:/app/logs
     
-    # Dependency: Wait for MongoDB to start
+    # Startup order: Server waits for MongoDB to start
+    # Note: depends_on only waits for container start, not readiness
+    # MongoDB is usually ready within 5-10 seconds
     depends_on:
       mongo:
         condition: service_started
     
-    # Network
+    # Network configuration
     networks:
       - creators-network
 
-  # MongoDB Service
-  mongo:
-    image: mongo:7-alpine
-    container_name: creators-platform-mongo
+  # ============================================
+  # Frontend Service (React + Nginx)
+  # Purpose: Web UI served to browsers
+  # ============================================
+  client:
+    # Build from Dockerfile
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    
+    container_name: creators-platform-client
+    
+    # Port mapping: host:container
+    # External: http://localhost:3000
+    # Internal: http://client:3000 (from other containers)
     ports:
-      - "27017:27017"
+      - "3000:80"
+    
+    # Environment variables (passed to build stage)
     environment:
-      MONGO_INITDB_DATABASE: creators-platform
-      # Optional: Add credentials
-      # MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
-      # MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
+      # Frontend typically doesn't need secrets
+      # Backend URL for API calls (from browser perspective)
+      REACT_APP_API_URL: http://localhost:5000/api
     
-    volumes:
-      - mongo-data:/data/db
-      - mongo-config:/data/configdb
-    
+    # Restart policy
     restart: unless-stopped
     
+    # Health check
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     
+    # Startup order: Client waits for server
+    # This ensures API is ready before frontend is served
+    depends_on:
+      - server
+    
+    # Network configuration
     networks:
       - creators-network
 
-# Volumes for persistent data
+# ============================================
+# Volumes
+# Persistent data storage outside containers
+# ============================================
 volumes:
+  # MongoDB data volume
+  # Persists database between container restarts
+  # Deleted only with: docker-compose down -v
   mongo-data:
     driver: local
+  
+  # MongoDB configuration volume
   mongo-config:
     driver: local
 
-# Network for service communication
+# ============================================
+# Networks
+# Service-to-service communication
+# ============================================
 networks:
   creators-network:
     driver: bridge
+    # Services can reference each other by name:
+    # server → mongo:27017
+    # client → server:5000
+    # mongo → server:5000
