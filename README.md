@@ -103,6 +103,10 @@ A full-stack social media platform for content creators to share posts, manage p
 
 ## 🚀 Quick Start
 
+### ⚙️ Monorepo Setup
+
+This project uses **npm workspaces** to manage dependencies centrally. All packages (client, server, and root) share a single `node_modules` directory at the root level.
+
 ### Option 1: Docker Compose (Recommended)
 
 **1. Clone the repository**
@@ -147,108 +151,124 @@ docker-compose up --build
 
 ### Option 2: Local Development (Without Docker)
 
-**1. Backend Setup**
+**1. Install all dependencies** (uses npm workspaces)
 ```bash
-cd server
+# Install from root (this installs for both client and server)
 npm install
-
-# Create .env file
-cp .env.example .env
-nano .env  # Add Cloudinary credentials
-
-# Start MongoDB (ensure it's running on localhost:27017)
-# Then start backend
-npm start
 ```
 
-**2. Frontend Setup**
+**2. Setup environment files**
 ```bash
-cd client
-npm install
+# Create .env file for server
+cp server/.env.example server/.env
+nano server/.env  # Add Cloudinary credentials
 
-# Create .env file
-echo "VITE_API_URL=http://localhost:5000/api" > .env
+# Create .env file for client
+echo "VITE_API_URL=http://localhost:5000/api" > client/.env
+```
 
-# Start dev server
+**3. Start both servers concurrently**
+```bash
+# From root directory - starts both client and server
 npm run dev
 ```
 
-Access at http://localhost:5173
+Or run them separately:
+```bash
+# Terminal 1: Start backend
+npm run server
+
+# Terminal 2: Start frontend
+npm run client
+```
+
+**Access at:**
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:5000
 
 ---
 
 ## 📁 Project Structure
 
 ```
-creators-platform/
-├── client/                          # React frontend
+creators-platform/              # NPM Workspaces Root
+├── node_modules/               # Single shared node_modules (all packages)
+├── package.json                # Root workspace config
+├── package-lock.json
+│
+├── client/                      # React frontend workspace
 │   ├── src/
-│   │   ├── components/              # React components
+│   │   ├── components/          # React components
 │   │   │   ├── ImageUpload.jsx
-│   │   │   ├── common/              # Shared components
+│   │   │   ├── common/          # Shared components
 │   │   │   │   ├── ConnectionTest.jsx
 │   │   │   │   ├── ProtectedRoute.jsx
 │   │   │   │   └── PublicRoute.jsx
-│   │   │   └── layout/              # Layout components
+│   │   │   └── layout/          # Layout components
 │   │   │       ├── Header.jsx
 │   │   │       └── Footer.jsx
-│   │   ├── pages/                   # Page components
+│   │   ├── pages/               # Page components
 │   │   │   ├── Home.jsx
 │   │   │   ├── Login.jsx
 │   │   │   ├── Register.jsx
 │   │   │   ├── Dashboard.jsx
 │   │   │   ├── CreatePost.jsx
 │   │   │   └── EditPost.jsx
-│   │   ├── context/                 # State management
+│   │   ├── context/             # State management
 │   │   │   └── AuthContext.jsx
-│   │   ├── services/                # API & utilities
-│   │   │   ├── api.js               # Axios instance
-│   │   │   ├── socket.js            # Socket.io setup
-│   │   │   └── toast.js             # Notifications
-│   │   ├── utils/                   # Helper functions
+│   │   ├── services/            # API & utilities
+│   │   │   ├── api.js           # Axios instance
+│   │   │   ├── socket.js        # Socket.io setup
+│   │   │   └── toast.js         # Notifications
+│   │   ├── utils/               # Helper functions
 │   │   │   └── auth.js
 │   │   ├── App.jsx
 │   │   └── main.jsx
-│   ├── public/                      # Static assets
-│   ├── nginx.conf                   # Nginx configuration
-│   ├── Dockerfile                   # Production build
+│   ├── public/                  # Static assets
+│   ├── nginx.conf               # Nginx configuration
+│   ├── Dockerfile               # Production build
 │   ├── vite.config.js
-│   ├── package.json
+│   ├── package.json             # Client workspace package
 │   └── eslint.config.js
 │
-├── server/                          # Express backend
+├── server/                      # Express backend workspace
 │   ├── config/
-│   │   ├── database.js              # MongoDB connection
-│   │   └── cloudinary.js            # Image upload config
-│   ├── controllers/                 # Business logic
+│   │   ├── database.js          # MongoDB connection
+│   │   └── cloudinary.js        # Image upload config
+│   ├── controllers/             # Business logic
 │   │   ├── authController.js
 │   │   ├── postController.js
 │   │   └── userController.js
 │   ├── middleware/
-│   │   ├── auth.js                  # JWT authentication
-│   │   ├── errorHandler.js          # Error handling
-│   │   └── upload.js                # File upload middleware
-│   ├── models/                      # Database schemas
+│   │   ├── auth.js              # JWT authentication
+│   │   ├── errorHandler.js      # Error handling
+│   │   ├── upload.js            # File upload middleware
+│   │   └── timing.js            # Request timing middleware
+│   ├── models/                  # Database schemas
 │   │   ├── User.js
 │   │   └── Post.js
-│   ├── routes/                      # API endpoints
+│   ├── routes/                  # API endpoints
 │   │   ├── authRoutes.js
 │   │   ├── postRoutes.js
 │   │   ├── userRoutes.js
 │   │   └── upload.js
-│   ├── server.js                    # Entry point
-│   ├── Dockerfile                   # Production build
-│   ├── package.json
+│   ├── logs/                    # Application logs
+│   ├── server.js                # Entry point
+│   ├── Dockerfile               # Production build
+│   ├── package.json             # Server workspace package
 │   └── .env.example
 │
-├── docker-compose.yml               # Service orchestration
-├── .gitignore                       # Git exclusions
-├── .env.example                     # Environment template
-├── README.md                        # This file
-├── COMPOSE_GUIDE.md                 # Docker Compose guide
-├── SECURE_ENV_VARIABLES.md          # Secrets management
-└── SECURITY_SECRETS_GUIDE.md        # Security practices
+├── docker-compose.yml           # Service orchestration
+├── .gitignore                   # Git exclusions
+├── .env.example                 # Environment template
+└── README.md                    # This file
 ```
+
+**Monorepo Benefits:**
+- ✅ Single `node_modules` directory (reduced disk space)
+- ✅ Centralized dependency management
+- ✅ Faster dependency resolution
+- ✅ Easier workspace scripts with `--workspace` flag
 
 ---
 
@@ -545,40 +565,67 @@ docker-compose up --scale server=3
 
 ## 💻 Development
 
+### NPM Workspaces Scripts
+
+**Running from root directory:**
+```bash
+# Install all dependencies for all workspaces
+npm install
+
+# Run both client and server concurrently
+npm run dev
+
+# Run only server
+npm run server
+
+# Run only client
+npm run client
+
+# Build client for production
+npm run client:build
+
+# Run server in dev mode with nodemon
+npm run server:dev
+```
+
 ### Running Locally
+
+**Start all services from root:**
+```bash
+npm run dev
+```
+
+This will start:
+- Backend on http://localhost:5000 with hot reload
+- Frontend on http://localhost:5173 with Vite hot reload
+
+**Or run separately:**
 
 **Backend Development Server**
 ```bash
-cd server
-npm install
-npm start
+npm run server
 ```
-Runs on http://localhost:5000 with hot reload
+Runs on http://localhost:5000 with nodemon hot reload
 
 **Frontend Development Server**
 ```bash
-cd client
-npm install
-npm run dev
+npm run client
 ```
-Runs on http://localhost:5173 with hot reload
+Runs on http://localhost:5173 with Vite hot reload
 
-### Available Scripts
+### Available Workspace Scripts
 
-**Server**
+**Server Workspace**
 ```bash
-npm start                   # Start server
-npm run dev                 # Start with nodemon (hot reload)
-npm test                    # Run tests
-npm run seed                # Seed database with sample data
+npm run dev --workspace=server      # Start with nodemon (hot reload)
 ```
 
-**Client**
+**Client Workspace**
 ```bash
-npm run dev                 # Start Vite dev server
-npm run build               # Build for production
-npm run preview              # Preview production build
-npm run lint                # Run ESLint
+npm run dev --workspace=client      # Start Vite dev server
+npm run build --workspace=client    # Build for production
+npm run preview --workspace=client  # Preview production build
+npm run lint --workspace=client     # Run ESLint
 ```
 
 ### Database Seeding
