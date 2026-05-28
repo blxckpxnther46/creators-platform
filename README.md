@@ -290,7 +290,7 @@ creators-platform/              # NPM Workspaces Root
 - MongoDB host changes (localhost → mongo)
 - NODE_ENV override (production)
 
-See [SECURE_ENV_VARIABLES.md](SECURE_ENV_VARIABLES.md) for detailed environment setup.
+**Note:** Keep all sensitive credentials in .env files (not committed to git). For production, use environment-specific secrets management.
 
 ### Cloudinary Setup
 
@@ -692,10 +692,9 @@ Populates database with:
 - ✅ Resource limits (recommended)
 
 ### Secrets Management
-See [SECURE_ENV_VARIABLES.md](SECURE_ENV_VARIABLES.md) for:
-- Local development (.env files)
-- Docker deployment (env_file + overrides)
-- Production best practices
+- **Local development:** Use .env files with example templates
+- **Docker deployment:** Use env_file in docker-compose.yml with environment variable overrides
+- **Production:** Use managed secrets (AWS Secrets Manager, HashiCorp Vault, or cloud provider equivalents)
 
 ---
 
